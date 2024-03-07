@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "335998453473",
+    "project_id": "react-native-currency-77e25",
+    "storage_bucket": "react-native-currency-77e25.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:335998453473:android:1fca6898556f78115559a0",
+        "android_client_info": {
+          "package_name": "com.leykwanchoo.CurrencyCamera"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "335998453473-ursfnbe5jesuia9cqpn97cedattbbbv4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.leykwanchoo.CurrencyCamera",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "335998453473-nt90g9s6tiqsf8u2a2lrue4vmihlr59j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7tpEpgOJGqXmiXa5ERCowpZqnxpB6-aM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "335998453473-nt90g9s6tiqsf8u2a2lrue4vmihlr59j.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "335998453473-fq11idnnfg1c7l8mh4lhg1nsokseipcu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.leykwanchoo.StickerSmash"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:335998453473:android:308e14be1d5a31385559a0",
+        "android_client_info": {
+          "package_name": "com.leykwanchoo.StickerSmash"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "335998453473-nt90g9s6tiqsf8u2a2lrue4vmihlr59j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7tpEpgOJGqXmiXa5ERCowpZqnxpB6-aM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "335998453473-nt90g9s6tiqsf8u2a2lrue4vmihlr59j.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "335998453473-fq11idnnfg1c7l8mh4lhg1nsokseipcu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.leykwanchoo.StickerSmash"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
