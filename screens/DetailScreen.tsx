@@ -60,28 +60,70 @@ interface DetailProps {
   navigation?: any;
 }
 
+const currencySymbols = {
+  USD: "$",
+  GBP: "£",
+  CNY: "¥",
+  EUR: "€",
+  SGD: "S$",
+  MYR: "RM",
+  THB: "฿",
+  KRW: "₩",
+  JPY: "¥",
+  TWD: "NT$",
+  MXN: "Mex$",
+  IDR: "Rp",
+  VND: "₫",
+  AUD: "A$",
+  NZD: "NZ$",
+  EGP: "E£",
+  ZAR: "R",
+  CHF: "CHF",
+  DKK: "kr",
+  CAD: "C$",
+  ISK: "kr",
+  SEK: "kr",
+  NOK: "kr",
+  HRK: "kn",
+  CZK: "Kč",
+  HUF: "Ft",
+  PLN: "zł",
+  TRY: "₺",
+  PEN: "S/.",
+  LKR: "Rs",
+  KHR: "៛",
+};
+
 export const DetailScreen: React.FC<DetailProps> = ({ route, navigation }) => {
   const { tripId, total, baseCurrency, title, destination } = route.params;
   const dispatch = useDispatch();
   const { status } = useSelector((state) => state.transactions);
-
+  console.log(tripId);
   const selectTransactionById = useMemo(
     () => createSelectTransactionById(tripId),
     [tripId]
   );
   const transactions = useSelector(selectTransactionById);
-
   // handle filtering for category
   // values of the checkboxes
   const [values, setValues] = useState([]);
   const [filteredTransactions, setFilteredTransactions] =
     useState(transactions);
+  const [filteredTotal, setFilteredTotal] = useState(total);
   const [currentCategory, setCurrentCategory] = useState([]);
   const [categoryChanged, setCategoryChanged] = useState(false);
   const handleApplyFilterCategory = () => {
     const filteredData = transactions.filter((transaction) => {
       return values.length === 0 || values.includes(transaction.category);
     });
+
+    let total = filteredData.reduce((acc, curr) => {
+      return parseFloat(acc) + parseFloat(curr.amount);
+    }, 0);
+
+    // fix total to 2 decimal places
+    total = total.toFixed(2);
+    setFilteredTotal(total);
     setFilteredTransactions(filteredData);
     setCurrentCategory(values);
     setCategoryChanged(false);
@@ -97,7 +139,7 @@ export const DetailScreen: React.FC<DetailProps> = ({ route, navigation }) => {
   const handleDeleteTrip = async () => {
     try {
       await dispatch(deleteTrip(tripId));
-      await dispatch(deleteTransaction(tripId));
+      // await dispatch(deleteTransaction(tripId));
       navigation.goBack();
       toast.show({
         placement: "bottom",
@@ -179,331 +221,366 @@ export const DetailScreen: React.FC<DetailProps> = ({ route, navigation }) => {
   );
 
   return (
-    <ScreenContainer>
-      {/* <HStack alignItems="center" space="sm"> */}
-      <HStack justifyContent="space-between" alignItems="center">
-        <TouchableOpacity
-          onPress={() => {
-            setCurrentCategory([]);
-            navigation.goBack();
-          }}
-        >
-          <Ionicons name="chevron-back" size={24} color="black" />
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={showModal}>
-          <MaterialIcons name="delete-outline" size={24} color="red" />
-        </TouchableOpacity>
-      </HStack>
-      <View style={styles.parentContainer}>
-        <HStack style={styles.title}>
-          <View>
-            <Text size="3xl">{title}</Text>
-            <Text size="md">{destination} </Text>
-          </View>
-          <Avatar bgColor="gray" size="lg" borderRadius="$xl">
-            {/* <AvatarFallbackText>Sandeep Srivastava</AvatarFallbackText> */}
-            <AntDesign name="hearto" size={16} color="white" />
-          </Avatar>
-        </HStack>
-        <HStack style={styles.filterContainer}>
-          <TouchableOpacity onPress={handlePresentModalPress}>
-            <HStack style={styles.filterContent}>
-              <AntDesign name="calendar" size={16} color="black" />
-              <Text size="sm">All Days</Text>
-            </HStack>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handlePresentModalPressCategory}>
-            <HStack
-              style={
-                currentCategory.length !== 0
-                  ? styles.filterContentSelected
-                  : styles.filterContent
-              }
-            >
-              <AntDesign
-                name="appstore-o"
-                size={16}
-                color={currentCategory.length !== 0 ? "white" : "black"}
-              />
-              {
-                // if selected categories is not empty, render the selected categories
-
-                currentCategory.length !== 0 ? (
-                  <Text
-                    size="sm"
-                    color="white"
-                  >{`Category (${currentCategory.length})`}</Text>
-                ) : (
-                  <Text size="sm" color="black">
-                    All Categories{" "}
-                  </Text>
-                )
-              }
-            </HStack>
-          </TouchableOpacity>
-        </HStack>
-        <Text size="xl" bold>
-          Transactions
-        </Text>
-
-        {/* render this if transactions is none */}
-        {filteredTransactions.length === 0 ? (
-          <View alignItems="center" justifyContent="center">
-            <LottieView
-              source={require("../assets/lottie/not-found.json")}
-              autoPlay
-              style={{ width: 250, height: 250 }}
-              loop={false}
-            />
-            <Text size="md" mt="$4">
-              No Transactions yet.
-            </Text>
-          </View>
-        ) : (
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.transactionContainer}
+    <ScreenContainer
+      style={{
+        overflow: "hidden",
+      }}
+    >
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* <HStack alignItems="center" space="sm"> */}
+        <HStack justifyContent="space-between" alignItems="center" mt="$4">
+          <TouchableOpacity
+            onPress={() => {
+              setCurrentCategory([]);
+              navigation.goBack();
+            }}
           >
-            {transactions.map((transaction, index) => {
-              return (
-                <Transaction
-                  key={index}
-                  amount={transaction.amount}
-                  category={transaction.category}
-                  description={transaction.description}
-                  date={transaction.date}
-                  baseCurrency={baseCurrency}
-                />
-              );
-            })}
-          </ScrollView>
-        )}
-        {
-          // render this if transactions is none
-          transactions.length !== 0 && (
-            <HStack style={styles.totalContainer}>
-              <Text> Total:</Text>
-              <Text size="4xl" bold mr="$3">
-                {baseCurrency} {total}
-              </Text>
-            </HStack>
-          )
-        }
+            <Ionicons name="chevron-back" size={24} color="black" />
+          </TouchableOpacity>
 
-        <BottomSheetModal
-          ref={bottomSheetModalRef}
-          index={1}
-          snapPoints={snapPoints}
-          onChange={handleSheetChanges}
-          backdropComponent={renderBackdrop}
-        >
-          <View style={styles.contentContainer}>
-            <Text size="xl" alignSelf="center">
-              Date
-            </Text>
-            <Divider mt="$4" width="110%" />
-            <View
-              style={{
-                width: "100%",
-                alignItems: "start",
-                marginVertical: 20,
-              }}
-            >
-              <ScrollView
-                horizontal={true}
-                showsHorizontalScrollIndicator={false}
-                style={{}}
-              >
-                <HStack alignItems="center">
-                  <DayPicker />
-                  <DayPicker />
-                  <DayPicker />
-                  <DayPicker />
-
-                  <DayPicker />
-                  <DayPicker />
-                  <DayPicker />
-                </HStack>
-              </ScrollView>
+          <TouchableOpacity onPress={showModal}>
+            <MaterialIcons name="delete-outline" size={24} color="red" />
+          </TouchableOpacity>
+        </HStack>
+        <View style={styles.parentContainer}>
+          <HStack style={styles.title}>
+            <View>
+              <Text size="3xl">{title}</Text>
+              <Text size="md">{destination} </Text>
             </View>
-            <TouchableOpacity
-              style={{
-                backgroundColor: "black",
-                alignItems: "center",
-                borderRadius: 10,
-                width: "100%",
-                maxWidth: Dimensions.get("window").width - 40,
-                paddingVertical: 10,
-              }}
-            >
-              <Text color="white" bold>
-                Apply
-              </Text>
+            <Avatar bgColor="gray" size="lg" borderRadius="$xl">
+              {/* <AvatarFallbackText>Sandeep Srivastava</AvatarFallbackText> */}
+              <AntDesign name="hearto" size={16} color="white" />
+            </Avatar>
+          </HStack>
+          <HStack style={styles.filterContainer}>
+            <TouchableOpacity onPress={handlePresentModalPress}>
+              <HStack style={styles.filterContent}>
+                <AntDesign name="calendar" size={16} color="black" />
+                <Text size="sm">All Days</Text>
+              </HStack>
             </TouchableOpacity>
-            <Pressable
-              style={{
-                alignItems: "center",
-                padding: 13,
-              }}
-              onPress={() => {
-                setFilteredTransactions(transactions);
-                bottomSheetModalRefCategory.current?.close();
-              }}
-            >
-              <Text color="black" bold>
-                Reset
-              </Text>
-            </Pressable>
-          </View>
-        </BottomSheetModal>
-        <BottomSheetModal
-          ref={bottomSheetModalRefCategory}
-          index={1}
-          snapPoints={snapPointsCategory}
-          onChange={handleSheetChangesCategory}
-          onDismiss={() => {
-            setCategoryChanged(false);
-          }}
-          backdropComponent={renderBackdrop}
-        >
-          <View style={styles.contentContainer}>
-            <Text size="xl" alignSelf="center">
-              Category
-            </Text>
-            <Divider mt="$4" mb="$2" width="110%" />
-            <CheckboxGroup
-              // value={values}
-              value={categoryChanged ? values : currentCategory}
-              onChange={(keys) => {
-                setCategoryChanged(true);
-                setValues(keys);
-              }}
-              style={styles.checkParentContainer}
-            >
-              <VStack space="sm" style={styles.checkContentContainer}>
-                <Checkbox
-                  aria-label="checkbox"
-                  value="Transport"
-                  style={styles.checkBoxContainer}
-                >
-                  <CheckboxIndicator mr="$2" style={styles.checkBox}>
-                    <CheckboxIcon as={CheckIcon} />
-                  </CheckboxIndicator>
-                  <CheckboxLabel>Transportation</CheckboxLabel>
-                </Checkbox>
-                <Divider width="90%" alignSelf="flex-end" />
 
-                <Checkbox
-                  aria-label="checkbox"
-                  value="Stay"
-                  style={styles.checkBoxContainer}
-                >
-                  <CheckboxIndicator mr="$2" style={styles.checkBox}>
-                    <CheckboxIcon as={CheckIcon} />
-                  </CheckboxIndicator>
-                  <CheckboxLabel>Accommodation</CheckboxLabel>
-                </Checkbox>
-                <Divider width="90%" alignSelf="flex-end" />
+            <TouchableOpacity onPress={handlePresentModalPressCategory}>
+              <HStack
+                style={
+                  currentCategory.length !== 0
+                    ? styles.filterContentSelected
+                    : styles.filterContent
+                }
+              >
+                <AntDesign
+                  name="appstore-o"
+                  size={16}
+                  color={currentCategory.length !== 0 ? "white" : "black"}
+                />
+                {
+                  // if selected categories is not empty, render the selected categories
 
-                <Checkbox
-                  aria-label="checkbox"
-                  value="Food"
-                  style={styles.checkBoxContainer}
+                  currentCategory.length !== 0 ? (
+                    <Text
+                      size="sm"
+                      color="white"
+                    >{`Category (${currentCategory.length})`}</Text>
+                  ) : (
+                    <Text size="sm" color="black">
+                      All Categories{" "}
+                    </Text>
+                  )
+                }
+              </HStack>
+            </TouchableOpacity>
+          </HStack>
+          {
+            // render this if filteredTransactions is not none
+            filteredTransactions.length !== 0 && (
+              <VStack mb="$4">
+                <Text size="xl" bold mb="$2">
+                  Overview
+                </Text>
+                <VStack
+                  style={{
+                    backgroundColor: "white",
+                    borderRadius: 10,
+                    paddingHorizontal: 15,
+                  }}
                 >
-                  <CheckboxIndicator mr="$2" style={styles.checkBox}>
-                    <CheckboxIcon as={CheckIcon} />
-                  </CheckboxIndicator>
-                  <CheckboxLabel>Food</CheckboxLabel>
-                </Checkbox>
-                <Divider width="90%" alignSelf="flex-end" />
-
-                <Checkbox
-                  aria-label="checkbox"
-                  value="Activities"
-                  style={styles.checkBoxContainer}
-                >
-                  <CheckboxIndicator mr="$2" style={styles.checkBox}>
-                    <CheckboxIcon as={CheckIcon} />
-                  </CheckboxIndicator>
-                  <CheckboxLabel>Activity</CheckboxLabel>
-                </Checkbox>
-                <Divider mb="$4" width="90%" alignSelf="flex-end" />
+                  <HStack py="$3" justifyContent="space-between">
+                    <Text size="lg">Total transactions</Text>
+                    <Text size="lg" bold>
+                      {filteredTransactions.length}
+                    </Text>
+                  </HStack>
+                  <Divider />
+                  <HStack py="$3" justifyContent="space-between">
+                    <Text size="lg">Total spent</Text>
+                    <Text size="lg" bold>
+                      {currencySymbols[baseCurrency]} {filteredTotal}
+                    </Text>
+                  </HStack>
+                </VStack>
               </VStack>
-            </CheckboxGroup>
-            <TouchableOpacity
-              style={{
-                backgroundColor: "black",
-                alignItems: "center",
-                borderRadius: 10,
-                width: "100%",
-                maxWidth: Dimensions.get("window").width - 40,
-                paddingVertical: 10,
-              }}
-              onPress={handleApplyFilterCategory}
-            >
-              <Text color="white" bold>
-                Apply
+            )
+          }
+          <Text size="xl" bold mb="$2">
+            Transactions
+          </Text>
+
+          {/* render this if transactions is none */}
+          {filteredTransactions.length === 0 ? (
+            <View alignItems="center" justifyContent="center">
+              <LottieView
+                source={require("../assets/lottie/not-found.json")}
+                autoPlay
+                style={{ width: 250, height: 250 }}
+                loop={false}
+              />
+              <Text size="md" mt="$4">
+                No Transactions yet.
               </Text>
-            </TouchableOpacity>
-            <Pressable
-              style={{
-                alignItems: "center",
-                padding: 13,
-              }}
-              onPress={() => {
-                setFilteredTransactions(transactions);
-                setValues([]);
-                setCurrentCategory([]);
-                bottomSheetModalRefCategory.current?.close();
-              }}
-            >
-              <Text color="black" bold>
-                Reset
-              </Text>
-            </Pressable>
-          </View>
-        </BottomSheetModal>
-        <Portal>
-          <Modal
-            visible={visible}
-            onDismiss={hideModal}
-            contentContainerStyle={styles.modalContainer}
+            </View>
+          ) : (
+            <View style={styles.transactionContainer}>
+              {filteredTransactions.map((transaction, index) => {
+                return (
+                  <React.Fragment key={index}>
+                    <Transaction
+                      key={index}
+                      amount={transaction.amount}
+                      transactionId={transaction.transactionId}
+                      tripId={tripId}
+                      total={total}
+                      category={transaction.category}
+                      description={transaction.description}
+                      date={transaction.date}
+                      baseCurrency={baseCurrency}
+                      navigation={navigation}
+                      destination={destination}
+                    />
+                    {
+                      // render divider if not the last transaction
+                      index !== filteredTransactions.length - 1 && <Divider />
+                    }
+                  </React.Fragment>
+                );
+              })}
+            </View>
+          )}
+
+          <BottomSheetModal
+            ref={bottomSheetModalRef}
+            index={1}
+            snapPoints={snapPoints}
+            onChange={handleSheetChanges}
+            backdropComponent={renderBackdrop}
           >
-            <VStack
-              justifyContent="center"
-              alignItems="center"
-              style={{
-                maxWidth: 300,
-                padding: 30,
-              }}
-              space="md"
-            >
-              <Text
+            <View style={styles.contentContainer}>
+              <Text size="xl" alignSelf="center">
+                Date
+              </Text>
+              <Divider mt="$4" width="110%" />
+              <View
                 style={{
-                  fontWeight: "bold",
+                  width: "100%",
+                  alignItems: "start",
+                  marginVertical: 20,
                 }}
               >
-                Delete Trip?
+                <ScrollView
+                  horizontal={true}
+                  showsHorizontalScrollIndicator={false}
+                  style={{}}
+                >
+                  <HStack alignItems="center">
+                    <DayPicker />
+                    <DayPicker />
+                    <DayPicker />
+                    <DayPicker />
+
+                    <DayPicker />
+                    <DayPicker />
+                    <DayPicker />
+                  </HStack>
+                </ScrollView>
+              </View>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "black",
+                  alignItems: "center",
+                  borderRadius: 10,
+                  width: "100%",
+                  maxWidth: Dimensions.get("window").width - 40,
+                  paddingVertical: 10,
+                }}
+              >
+                <Text color="white" bold>
+                  Apply
+                </Text>
+              </TouchableOpacity>
+              <Pressable
+                style={{
+                  alignItems: "center",
+                  padding: 13,
+                }}
+                onPress={() => {
+                  setFilteredTransactions(transactions);
+                  bottomSheetModalRefCategory.current?.close();
+                }}
+              >
+                <Text color="black" bold>
+                  Reset
+                </Text>
+              </Pressable>
+            </View>
+          </BottomSheetModal>
+          <BottomSheetModal
+            ref={bottomSheetModalRefCategory}
+            index={1}
+            snapPoints={snapPointsCategory}
+            onChange={handleSheetChangesCategory}
+            onDismiss={() => {
+              setCategoryChanged(false);
+            }}
+            backdropComponent={renderBackdrop}
+          >
+            <View style={styles.contentContainer}>
+              <Text size="xl" alignSelf="center">
+                Category
               </Text>
-              <Text>
-                You will delete the trip and all transactions permanently.
-              </Text>
-            </VStack>
-            <Divider />
-            <Pressable p="$3" onPress={handleDeleteTrip}>
-              <Text color="red" bold>
-                Delete{" "}
-              </Text>
-            </Pressable>
-            <Divider />
-            <Pressable p="$3" onPress={hideModal}>
-              <Text>Cancel</Text>
-            </Pressable>
-          </Modal>
-        </Portal>
-      </View>
+              <Divider mt="$4" mb="$2" width="110%" />
+              <CheckboxGroup
+                // value={values}
+                value={categoryChanged ? values : currentCategory}
+                onChange={(keys) => {
+                  setCategoryChanged(true);
+                  setValues(keys);
+                }}
+                style={styles.checkParentContainer}
+              >
+                <VStack space="sm" style={styles.checkContentContainer}>
+                  <Checkbox
+                    aria-label="checkbox"
+                    value="Transport"
+                    style={styles.checkBoxContainer}
+                  >
+                    <CheckboxIndicator mr="$2" style={styles.checkBox}>
+                      <CheckboxIcon as={CheckIcon} />
+                    </CheckboxIndicator>
+                    <CheckboxLabel>Transportation</CheckboxLabel>
+                  </Checkbox>
+                  <Divider width="90%" alignSelf="flex-end" />
+
+                  <Checkbox
+                    aria-label="checkbox"
+                    value="Stay"
+                    style={styles.checkBoxContainer}
+                  >
+                    <CheckboxIndicator mr="$2" style={styles.checkBox}>
+                      <CheckboxIcon as={CheckIcon} />
+                    </CheckboxIndicator>
+                    <CheckboxLabel>Accommodation</CheckboxLabel>
+                  </Checkbox>
+                  <Divider width="90%" alignSelf="flex-end" />
+
+                  <Checkbox
+                    aria-label="checkbox"
+                    value="Food"
+                    style={styles.checkBoxContainer}
+                  >
+                    <CheckboxIndicator mr="$2" style={styles.checkBox}>
+                      <CheckboxIcon as={CheckIcon} />
+                    </CheckboxIndicator>
+                    <CheckboxLabel>Food</CheckboxLabel>
+                  </Checkbox>
+                  <Divider width="90%" alignSelf="flex-end" />
+
+                  <Checkbox
+                    aria-label="checkbox"
+                    value="Activities"
+                    style={styles.checkBoxContainer}
+                  >
+                    <CheckboxIndicator mr="$2" style={styles.checkBox}>
+                      <CheckboxIcon as={CheckIcon} />
+                    </CheckboxIndicator>
+                    <CheckboxLabel>Activity</CheckboxLabel>
+                  </Checkbox>
+                  <Divider mb="$4" width="90%" alignSelf="flex-end" />
+                </VStack>
+              </CheckboxGroup>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "black",
+                  alignItems: "center",
+                  borderRadius: 10,
+                  width: "100%",
+                  maxWidth: Dimensions.get("window").width - 40,
+                  paddingVertical: 10,
+                }}
+                onPress={handleApplyFilterCategory}
+              >
+                <Text color="white" bold>
+                  Apply
+                </Text>
+              </TouchableOpacity>
+              <Pressable
+                style={{
+                  alignItems: "center",
+                  padding: 13,
+                }}
+                onPress={() => {
+                  setFilteredTransactions(transactions);
+                  setFilteredTotal(total);
+                  setValues([]);
+                  setCurrentCategory([]);
+                  bottomSheetModalRefCategory.current?.close();
+                }}
+              >
+                <Text color="black" bold>
+                  Reset
+                </Text>
+              </Pressable>
+            </View>
+          </BottomSheetModal>
+          <Portal>
+            <Modal
+              visible={visible}
+              onDismiss={hideModal}
+              contentContainerStyle={styles.modalContainer}
+            >
+              <VStack
+                justifyContent="center"
+                alignItems="center"
+                style={{
+                  maxWidth: 300,
+                  padding: 30,
+                }}
+                space="md"
+              >
+                <Text
+                  style={{
+                    fontWeight: "bold",
+                  }}
+                >
+                  Delete Trip?
+                </Text>
+                <Text>
+                  You will delete the trip and all transactions permanently.
+                </Text>
+              </VStack>
+              <Divider />
+              <Pressable p="$3" onPress={handleDeleteTrip}>
+                <Text color="red" bold>
+                  Delete
+                </Text>
+              </Pressable>
+              <Divider />
+              <Pressable p="$3" onPress={hideModal}>
+                <Text>Cancel</Text>
+              </Pressable>
+            </Modal>
+          </Portal>
+        </View>
+      </ScrollView>
     </ScreenContainer>
   );
 };
@@ -517,7 +594,7 @@ const styles = StyleSheet.create({
     width: "100%",
     flex: 1,
     marginTop: 20,
-    marginBottom: -30,
+    // marginBottom: -100,
   },
   title: {
     gap: 20,
@@ -526,9 +603,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   transactionContainer: {
-    gap: 10,
-    marginTop: 10,
-    paddingBottom: 100,
+    // marginTop: 10,
+    backgroundColor: "white",
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    padding: 5,
+    // height: 500,
   },
   filterContainer: {
     gap: 20,

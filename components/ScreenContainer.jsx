@@ -12,10 +12,10 @@ export const ScreenContainer = ({ children }) => {
   return (
     <VStack
       flex={1}
-      p={6}
       safeAreaTop
       style={{
         backgroundColor: "#F0F5F9",
+        paddingHorizontal: 20,
       }}
     >
       {children}

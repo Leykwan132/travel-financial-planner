@@ -27,6 +27,39 @@ interface ComponentProps {
   navigation?: any;
   // Define your component props here
 }
+const currencySymbols = {
+  USD: "$",
+  GBP: "£",
+  CNY: "¥",
+  EUR: "€",
+  SGD: "S$",
+  MYR: "RM",
+  THB: "฿",
+  KRW: "₩",
+  JPY: "¥",
+  TWD: "NT$",
+  MXN: "Mex$",
+  IDR: "Rp",
+  VND: "₫",
+  AUD: "A$",
+  NZD: "NZ$",
+  EGP: "E£",
+  ZAR: "R",
+  CHF: "CHF",
+  DKK: "kr",
+  CAD: "C$",
+  ISK: "kr",
+  SEK: "kr",
+  NOK: "kr",
+  HRK: "kn",
+  CZK: "Kč",
+  HUF: "Ft",
+  PLN: "zł",
+  TRY: "₺",
+  PEN: "S/.",
+  LKR: "Rs",
+  KHR: "៛",
+};
 
 export const TripCard: React.FC<ComponentProps> = ({
   title,
@@ -119,7 +152,7 @@ export const TripCard: React.FC<ComponentProps> = ({
             </VStack>
             <VStack justifyContent="center" mr="$2">
               <Text size="xl" bold>
-                {baseCurrency} {total}
+                {currencySymbols[baseCurrency]} {total}
               </Text>
             </VStack>
           </HStack>

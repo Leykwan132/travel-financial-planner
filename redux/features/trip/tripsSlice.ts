@@ -75,21 +75,22 @@ export const updateTripTotal = createAsyncThunk(
   async (data, { getState }) => {
     try {
       const { trips } = getState();
-      console.log("trips", trips);
-      console.log("data", data);
+
       // grab the trip from the state
       const trip = trips.trips.find((trip) => trip.tripId === data.tripId);
-
-      // update the total with the sum of all transactions
-
-      const total = trip.total + parseFloat(data.amount);
-
+      console.log("trip", trip);
+      console.log("data", data);
+      // fix to 2 decimal place
+      let total = trip.total + parseFloat(data.amount);
+      total = parseFloat(total.toFixed(2));
+      console.log("total", total);
       await firestore().collection("trips").doc(data.tripId).update({
         total: total,
       });
+
+      const tripId = data.tripId;
       return { tripId, total };
     } catch (e) {
-      console.log("failed");
       console.error(e);
     }
   }
@@ -129,7 +130,6 @@ export const tripsSlice = createSlice({
         );
       })
       .addCase(updateTripTotal.fulfilled, (state, action) => {
-        console.log("updateTripTotal.fulfilled", action.payload);
         const { tripId, total } = action.payload;
         const existingTrip = state.trips.find((trip) => trip.tripId === tripId);
         if (existingTrip) {

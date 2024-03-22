@@ -8,10 +8,12 @@ import {
   ProfileScreen,
   TripScreen,
   DetailScreen,
+  TransactionScreen,
 } from "../screens";
 import { LoginScreen } from "../screens/auth/LoginScreen";
 import { View, Button } from "react-native";
 import { useSelector } from "react-redux";
+import { NavigationContainer } from "@react-navigation/native";
 
 const Tab = createBottomTabNavigator();
 const TripStack = createNativeStackNavigator();
@@ -30,14 +32,12 @@ function TripStackScreen() {
     <TripStack.Navigator screenOptions={{ headerShown: false }}>
       <TripStack.Screen name="Trip" component={TripScreen} />
       <TripStack.Screen name="Details" component={DetailScreen} />
+      <TripStack.Screen name="Transaction" component={TransactionScreen} />
     </TripStack.Navigator>
   );
 }
-export const BottomNavigator = () => {
+export const HomeNavigator = () => {
   const { user } = useSelector((state) => state.user);
-
-  // check if user is null
-
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen
@@ -52,7 +52,7 @@ export const BottomNavigator = () => {
       />
       <Tab.Screen
         name="Trips"
-        component={!user ? LoginScreen : TripStackScreen}
+        component={TripStackScreen}
         options={{
           tabBarLabel: "Trips",
           tabBarIcon: ({ color, size }) => (
@@ -71,7 +71,7 @@ export const BottomNavigator = () => {
       />
       <Tab.Screen
         name="Profile"
-        component={!user ? LoginScreen : ProfileScreen}
+        component={ProfileScreen}
         options={{
           tabBarLabel: "Profile",
           tabBarIcon: ({ color, size }) => (

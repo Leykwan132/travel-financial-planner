@@ -20,7 +20,7 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
-import { TouchableOpacity, StyleSheet } from "react-native";
+import { TouchableOpacity, StyleSheet, Dimensions } from "react-native";
 import {
   BottomSheetModal,
   BottomSheetModalProvider,
@@ -30,13 +30,27 @@ import Travel from "../assets/travel.png";
 import Expenses from "../assets/expenses.png";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/features/user/userSlice";
-export const ProfileScreen = () => {
+import { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import LottieView from "lottie-react-native";
+
+export const ProfileScreen = ({ navigation }) => {
   const toast = useToast();
   const dispatch = useDispatch();
   const { name, photo } = useSelector((state) => state.user.user);
   const { trips } = useSelector((state) => state.trips);
+  const [totalExpenses, setTotalExpenses] = useState(0);
 
-  const data = Array.from({ length: 20 }, (v, i) => i);
+  const calculateTotalExpenses = useMemo(() => {
+    let total = 0;
+    if (trips === undefined) return;
+
+    trips.forEach((trip) => {
+      total += trip.total;
+    });
+    total = total.toFixed(2);
+    setTotalExpenses(total);
+  }, [trips]);
   // ref
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
@@ -86,7 +100,7 @@ export const ProfileScreen = () => {
       >
         <AntDesign name="setting" size={28} color="black" />
       </TouchableOpacity>
-      <VStack mt="$8" alignItems="center" space="lg">
+      <VStack mt={90} alignItems="center" space="lg">
         <Avatar
           size="xl"
           bgColor="white"
@@ -122,15 +136,15 @@ export const ProfileScreen = () => {
         >
           <VStack space="xl" my="$4" mx="$4">
             <Text size="sm">Lifetime Trip</Text>
-            <Heading size="2xl">{trips.length}</Heading>
+            <Heading size="lg">{trips.length}</Heading>
           </VStack>
           <Image
             source={Travel}
             alt="travel"
             style={{
               position: "absolute",
-              width: 120,
-              height: 120,
+              width: 100,
+              height: 100,
               right: 20,
               top: 10,
               transform: [{ rotate: "30deg" }],
@@ -153,15 +167,15 @@ export const ProfileScreen = () => {
         >
           <VStack space="xl" my="$4" mx="$4">
             <Text size="sm">Lifetime Expenses</Text>
-            <Heading size="2xl">RM 1000</Heading>
+            <Heading size="lg">RM {totalExpenses}</Heading>
           </VStack>
           <Image
             source={Expenses}
             alt="expenses"
             style={{
               position: "absolute",
-              width: 120,
-              height: 120,
+              width: 100,
+              height: 100,
               right: 20,
               top: 10,
               transform: [{ rotate: "30deg" }],
@@ -204,36 +218,47 @@ export const ProfileScreen = () => {
             }}
             onPress={() => {
               dispatch(logout());
+              navigation.reset({ index: 0, routes: [{ name: "Login" }] });
               toast.show({
                 placement: "top",
+                duration: 2000,
                 render: ({ id }) => {
                   const toastId = "toast-" + id;
                   return (
-                    <Toast
-                      nativeID={toastId}
-                      action="success"
-                      variant="accent"
+                    <View
                       style={{
-                        borderRadius: 10,
                         backgroundColor: "white",
+                        paddingVertical: 10,
+                        flexDirection: "row",
+                        flex: 1, // Key change 1: Ensure full width
+                        alignItems: "center", // Adjust alignment as needed (optional)
+                        justifyContent: "flex-start", // Adjust positioning as needed (optional)
+                        marginTop: 10,
+                        borderRadius: 10,
+                        paddingLeft: 20,
+                        minWidth: Dimensions.get("window").width - 40,
+                        marginHorizontal: 10,
                       }}
                     >
                       <HStack
-                        alignItems="center"
-                        justifyContent="center"
-                        space="md"
+                        style={{
+                          backgroundColor: "white",
+                          alignItems: "center",
+                        }}
+                        space="sm"
                       >
-                        <MaterialCommunityIcons
-                          name="exit-run"
-                          size={28}
-                          color="black"
+                        <LottieView
+                          source={require("../assets/lottie/success.json")}
+                          autoPlay
+                          style={{
+                            width: 50,
+                            height: 50,
+                          }}
+                          loop={false}
                         />
-                        <VStack space="xs">
-                          <ToastTitle>Logged out Successfully!</ToastTitle>
-                          <ToastDescription>See you soon! </ToastDescription>
-                        </VStack>
+                        <Text size="md">Logout Successfully!</Text>
                       </HStack>
-                    </Toast>
+                    </View>
                   );
                 },
               });

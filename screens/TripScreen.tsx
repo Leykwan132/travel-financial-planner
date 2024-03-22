@@ -100,7 +100,7 @@ const data = [
   { country: "Slovenia", currency: "EUR", isoCode: "SI" },
 ];
 
-export const TripScreen = ({ navigation }) => {
+export const TripScreen = ({ navigation, route }) => {
   const ref = firestore().collection("trips");
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user.user);
@@ -126,6 +126,8 @@ export const TripScreen = ({ navigation }) => {
   const [filteredCountry, setFilteredCountry] = useState(data);
   const [currentInput, setCurrentInput] = useState("");
 
+  // handle new trip
+
   const handleInputChange = (e) => {
     const searchTerm = e;
     setSearchItem(searchTerm);
@@ -141,7 +143,6 @@ export const TripScreen = ({ navigation }) => {
         justifyContent="center"
         alignItems="center"
         style={{
-          width: "33%",
           padding: 14,
         }}
         key={currency.isoCode}
@@ -175,7 +176,6 @@ export const TripScreen = ({ navigation }) => {
         justifyContent="center"
         alignItems="center"
         style={{
-          width: "33%",
           padding: 14,
         }}
         key={currency.isoCode}
@@ -233,7 +233,7 @@ export const TripScreen = ({ navigation }) => {
       await dispatch(
         addTrip({
           user: user.email,
-          date: firestore.FieldValue.serverTimestamp(),
+          date: new Date().toISOString(),
           tripName: tripName,
           baseCurrency: baseCurrency,
           destination: destination,
@@ -244,6 +244,7 @@ export const TripScreen = ({ navigation }) => {
       bottomSheetModalRef.current?.dismiss();
 
       toast.show({
+        duration: 3000,
         placement: "bottom",
         render: ({ id }) => {
           const toastId = "toast-" + id;
@@ -330,6 +331,9 @@ export const TripScreen = ({ navigation }) => {
         onPress={
           // handleKeyboardBlur
           () => {
+            setCurrentInput("");
+            setSearchItem("");
+            setFilteredCountry(data);
             setMissingFields(false);
             setCurrentStage("country");
           }
@@ -340,7 +344,13 @@ export const TripScreen = ({ navigation }) => {
       />
     );
   }, []);
-
+  useEffect(() => {
+    if (route.params?.detail) {
+      console.log("changed param");
+      bottomSheetModalRef.current?.present();
+      route.params.detail = null;
+    }
+  }, [route.params]);
   useEffect(() => {
     if (tripStatus === "idle") {
       dispatch(fetchTrips());
@@ -348,15 +358,13 @@ export const TripScreen = ({ navigation }) => {
   }, [tripStatus, dispatch]);
   return (
     <ScreenContainer>
-      <HStack justifyContent="space-between" alignItems="center">
+      <HStack justifyContent="space-between" alignItems="center" mt="$2">
         <Text size="2xl" bold>
           Trips
         </Text>
         <TouchableOpacity
           onPress={handlePresentModalPress}
           style={{
-            borderRadius: 100,
-            borderWidth: 1,
             padding: 5,
           }}
         >
@@ -365,15 +373,7 @@ export const TripScreen = ({ navigation }) => {
       </HStack>
       {/* Trip part */}
       {status === "idle" ? (
-        <>
-          {tripSkeletons.map((skeleton, index) => (
-            <React.Fragment key={index}>
-              <TripSkeleton key={index} />
-              {/* render a divider for all but the last index */}
-              {index !== tripSkeletons.length - 1 && <Divider my={-10} />}
-            </React.Fragment>
-          ))}
-        </>
+        <></>
       ) : (
         <ScrollView
           mb={-24}
@@ -608,6 +608,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     paddingHorizontal: 10,
     flexWrap: "wrap",
+    alignItems: "center",
     justifyContent: "space-around",
     paddingBottom: 20,
   },

@@ -62,6 +62,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { addTransaction } from "../redux/features/transaction/transactionsSlice";
 import { updateTripTotal } from "../redux/features/trip/tripsSlice";
 import LottieView from "lottie-react-native";
+import firestore from "@react-native-firebase/firestore";
 
 const data = [
   { country: "United States", currency: "USD", isoCode: "US" },
@@ -111,6 +112,9 @@ const data = [
 const DismissKeyboard = ({ children }) => ({ children });
 
 export const HomeScreen = ({ navigation }) => {
+  const { trips } = useSelector((state) => state.trips);
+  const { user } = useSelector((state) => state.user);
+
   // get the length of convertAmount
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState("");
@@ -123,7 +127,16 @@ export const HomeScreen = ({ navigation }) => {
   const [fetchedDate, setFetchedDate] = useState("");
   const [addStage, setAddStage] = useState("trip");
 
-  const { trips } = useSelector((state) => state.trips);
+  const [filteredTrip, setFilteredTrip] = useState(trips);
+
+  const handleFilterTrip = useCallback(() => {
+    // filter the trips that has the same base currency
+    const filteredTrip = trips.filter((trip) => {
+      return trip.baseCurrency === toCurrency;
+    });
+    setFilteredTrip(filteredTrip);
+  }, [toCurrency, trips]);
+
   // state for adding spending
   const [tripId, setTripId] = useState("");
   const [tripName, setTripName] = useState("");
@@ -131,7 +144,7 @@ export const HomeScreen = ({ navigation }) => {
   const [description, setDescription] = useState("");
   const dispatch = useDispatch();
   const [addStatus, setAddStatus] = useState("idle");
-  const [chosenTrip, setChosenTrip] = useState({});
+  const [error, setError] = useState(false);
   const toast = useToast();
 
   const handleTrendingPress = async () => {
@@ -152,17 +165,17 @@ export const HomeScreen = ({ navigation }) => {
           tripId,
           category,
           description,
+          date: new Date().toISOString(),
           amount: convertedAmount,
         })
       );
-      console.log("transaction added...");
+
       await dispatch(
         updateTripTotal({
           tripId,
           amount: convertedAmount,
         })
       );
-      // update the total
 
       bottomSheetAddModalRef.current?.dismiss();
       toast.show({
@@ -207,12 +220,17 @@ export const HomeScreen = ({ navigation }) => {
                 </HStack>
                 <Text
                   onPress={() => {
+                    const trip = trips.find((trip) => trip.tripId === tripId);
+                    let total =
+                      parseFloat(trip.total) + parseFloat(convertedAmount);
+
+                    total = total.toFixed(2);
                     navigation.navigate("Details", {
-                      tripId: chosenTrip.tripId,
-                      total: chosenTrip.total,
-                      baseCurrency: chosenTrip.baseCurrency,
-                      title: chosenTrip.tripName,
-                      destination: chosenTrip.destination,
+                      tripId: trip.tripId,
+                      total: total,
+                      baseCurrency: trip.baseCurrency,
+                      title: trip.tripName,
+                      destination: trip.destination,
                     });
                   }}
                   size="md"
@@ -226,7 +244,7 @@ export const HomeScreen = ({ navigation }) => {
           );
         },
       });
-      setTripId("");
+
       setCategory("");
       setTripName("");
       setDescription("");
@@ -261,7 +279,6 @@ export const HomeScreen = ({ navigation }) => {
         justifyContent="center"
         alignItems="center"
         style={{
-          width: "33%",
           padding: 14,
         }}
         key={currency.isoCode}
@@ -302,11 +319,9 @@ export const HomeScreen = ({ navigation }) => {
           paddingVertical: 6,
         }}
         onPress={() => {
-          console.log("trip", trip);
           setTripId(trip.tripId);
           setTripName(trip.tripName);
           setAddStage("category");
-          setChosenTrip(trip);
           bottomSheetAddModalRef.current?.snapToPosition("30%");
         }}
         key={trip.tripId}
@@ -355,6 +370,8 @@ export const HomeScreen = ({ navigation }) => {
           setTripId("");
           setTripName("");
           setCategory("");
+          setSearchItem("");
+          setFilteredCountry(data);
           setAddStage("trip");
         }}
         {...props}
@@ -414,7 +431,7 @@ export const HomeScreen = ({ navigation }) => {
         </Animated.View>
       </BottomSheetFooter>
     ),
-    [category, description, tripId]
+    [category, description, tripId, addStatus]
   );
 
   // filter the data displayed
@@ -474,7 +491,7 @@ export const HomeScreen = ({ navigation }) => {
 
   return (
     <ScreenContainer>
-      <VStack space="md">
+      <VStack space="md" mt="$2">
         <Text size="2xl" bold>
           Home
         </Text>
@@ -556,7 +573,12 @@ export const HomeScreen = ({ navigation }) => {
                   <TouchableOpacity
                     onPress={() => {
                       Keyboard.dismiss();
+                      if (amount == "") {
+                        setError(true);
+                        return;
+                      }
                       setLoading(true); // Set loading to true before fetching
+                      setError(false);
                       handleConversion();
                       handlePresentResultModalPress();
                     }}
@@ -574,6 +596,15 @@ export const HomeScreen = ({ navigation }) => {
           {/* </DismissKeyboard> */}
         </VStack>
       </VStack>
+
+      {
+        // if error, show the error message
+        error && (
+          <Text color="red" size="sm">
+            Please enter a valid amount
+          </Text>
+        )
+      }
 
       <BottomSheetModal
         ref={bottomSheetModalRef}
@@ -628,6 +659,7 @@ export const HomeScreen = ({ navigation }) => {
             <TouchableOpacity
               onPress={() => {
                 bottomSheetResultModalRef.current?.dismiss();
+                handleFilterTrip();
                 handlePresentAddModalPress();
               }}
               style={styles.addToDashboardButton}
@@ -670,6 +702,7 @@ export const HomeScreen = ({ navigation }) => {
                     setCategory("");
                     setTripId("");
                     setTripName("");
+                    bottomSheetAddModalRef.current?.snapToIndex(0);
                   }}
                 >
                   <Text size="md" bold={addStage == "trip" ? true : false}>
@@ -746,22 +779,62 @@ export const HomeScreen = ({ navigation }) => {
                 justifyContent="space-between"
                 alignItems="center"
                 // pt="$2"
-                my="$4"
+                mt="$4"
+                mb="$1"
                 px="$4"
               >
                 <Text size="md" bold>
                   Select trip
                 </Text>
-                <Text size="md" bold color="#00B2FF">
+                <Text
+                  size="md"
+                  bold
+                  color="#00B2FF"
+                  onPress={() => {
+                    navigation.navigate({
+                      name: "Trips",
+                      params: { detail: "addTrip" },
+                    });
+                    bottomSheetAddModalRef.current?.dismiss();
+                  }}
+                >
                   New trip
                 </Text>
               </HStack>
-
-              <BottomSheetScrollView
-                contentContainerStyle={styles.addScrollView}
-              >
-                {trips.map(renderTrip)}
-              </BottomSheetScrollView>
+              {
+                // if trips is empty, show the empty state
+                filteredTrip.length == 0 ? (
+                  <VStack alignItems="center" justifyContent="center">
+                    <LottieView
+                      source={require("../assets/lottie/no-trip.json")}
+                      autoPlay
+                      style={{
+                        width: 230,
+                        height: 230,
+                        // marginVertical: -40,
+                        marginTop: -30,
+                        marginBottom: -20,
+                      }}
+                      loop={false}
+                    />
+                    <Text size="sm">
+                      {" "}
+                      No trip with similar base currency is found.
+                    </Text>
+                  </VStack>
+                ) : (
+                  <>
+                    <Text size="sm" px="$4" mb="$4">
+                      Similar base currency trips only are shown.
+                    </Text>
+                    <BottomSheetScrollView
+                      contentContainerStyle={styles.addScrollView}
+                    >
+                      {filteredTrip.map(renderTrip)}
+                    </BottomSheetScrollView>
+                  </>
+                )
+              }
             </Animated.View>
           )}
 

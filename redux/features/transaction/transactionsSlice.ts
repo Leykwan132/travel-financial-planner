@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
 import { createSelector, lruMemoize } from "reselect";
 import firestore from "@react-native-firebase/firestore";
+import { nanoid } from "@reduxjs/toolkit";
 
 const initialState = {
   transactions: [],
@@ -13,16 +14,17 @@ export const addTransaction = createAsyncThunk(
   async (transaction) => {
     try {
       /* ... */
-      const { category, tripId, amount, description } = transaction;
-      await firestore().collection("transactions").add({
-        description: description,
-        category: category,
-        amount: amount,
-        tripId: tripId,
-        date: firestore.FieldValue.serverTimestamp(),
-      });
-      console.log("Transaction added successfully");
-      return transaction;
+      // const { category, tripId, amount, description,date } = transaction;
+      transactionId = nanoid();
+
+      await firestore()
+        .collection("transactions")
+        .doc(transactionId)
+        .set({
+          transactionId: transactionId,
+          ...transaction,
+        });
+      return { transactionId: transactionId, ...transaction };
     } catch (e) {
       console.error(e);
     }
@@ -70,8 +72,7 @@ export const transactionsSlice = createSlice({
   extraReducers(builder) {
     builder
       .addCase(addTransaction.fulfilled, (state, action) => {
-        state.transactions.push(action.payload);
-        // transactions added successfully
+        state.transactions.unshift(action.payload);
       })
       .addCase(fetchTransactions.fulfilled, (state, action) => {
         state.transactions = action.payload;
